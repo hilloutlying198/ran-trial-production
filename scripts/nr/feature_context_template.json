@@ -1,0 +1,26 @@
+{
+  "_instructions": "Fill this template for each new trial. Claude generates it automatically from the Nokia feature document (DN PDF) during Step 1a of the skill pipeline. Save as feature_context.json in the working directory before running build_stats_report_nr.py.",
+  "trial_id": "CBXXXXXX",
+  "rc_label": "RC1",
+  "feature_name": "Feature name from Nokia DN",
+  "feature_doc": "DNXXXXXXXXX",
+  "mechanism_summary": "One sentence describing what the feature changes at the radio/scheduling/hardware level",
+  "t1_carrier_kpis": [
+    {
+      "col": "Exact column name from Nokia export (case-sensitive)",
+      "label": "Short display label (<=20 chars)",
+      "unit": "(%)",
+      "category": "mechanism",
+      "note": "Why this KPI is in the list"
+    }
+  ],
+  "_category_values": ["mechanism", "outcome", "quality", "watchdog", "traffic_context"],
+  "t1_es_kpis": [
+    {
+      "col": "[N]ENERGY_CONSUMPTION_IN_BTS",
+      "label": "Total BTS Energy",
+      "unit": "(Wh)",
+      "note": "Remove or add ES KPIs based on what is available in the ES report"
+    }
+  ]
+}

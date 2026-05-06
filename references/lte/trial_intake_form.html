@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAN Trial Intake — Production Pipeline</title>
+<style>
+  :root {
+    --bg: #f8f9fa; --card: #fff; --border: #dee2e6; --accent: #0d6efd;
+    --accent-hover: #0b5ed7; --danger: #dc3545; --success: #198754;
+    --text: #212529; --muted: #6c757d; --light-accent: #e7f1ff;
+    --section-bg: #f0f4f8; --required: #dc3545;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.5; padding: 20px; }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a365d 0%, #2563eb 100%);
+            color: #fff; padding: 28px 32px; border-radius: 12px; margin-bottom: 24px; }
+  .header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+  .header p { opacity: 0.85; font-size: 0.9rem; }
+
+  /* Sections */
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+             margin-bottom: 18px; overflow: hidden; }
+  .section-head { background: var(--section-bg); padding: 14px 20px; cursor: pointer;
+                  display: flex; align-items: center; gap: 10px; user-select: none; }
+  .section-head:hover { background: #e2e8f0; }
+  .section-num { background: var(--accent); color: #fff; width: 28px; height: 28px;
+                 border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                 font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+  .section-title { font-weight: 600; font-size: 1.0rem; flex: 1; }
+  .section-toggle { font-size: 1.2rem; color: var(--muted); transition: transform 0.2s; }
+  .section.collapsed .section-toggle { transform: rotate(-90deg); }
+  .section.collapsed .section-body { display: none; }
+  .section-body { padding: 18px 20px; }
+
+  /* Form elements */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: #374151; }
+  .field label .req { color: var(--required); margin-left: 2px; }
+  .field .hint { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+  input[type="text"], input[type="date"], input[type="number"], select, textarea {
+    width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.9rem; font-family: inherit; transition: border-color 0.15s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,110,253,0.12); }
+  textarea { resize: vertical; min-height: 70px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .row > .field { flex: 1; min-width: 180px; }
+
+  /* Carrier table */
+  .carrier-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
+  .carrier-table th { background: var(--section-bg); padding: 8px 10px; text-align: left;
+                      font-weight: 600; border-bottom: 2px solid var(--border); }
+  .carrier-table td { padding: 6px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  .carrier-table input[type="number"], .carrier-table input[type="text"], .carrier-table select {
+    width: 100%; padding: 4px 8px; font-size: 0.85rem; }
+  .carrier-table .cb { width: 18px; height: 18px; accent-color: var(--accent); }
+  .btn-sm { padding: 4px 12px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
+  .btn-add { background: var(--accent); color: #fff; margin-top: 8px; }
+  .btn-add:hover { background: var(--accent-hover); }
+  .btn-del { background: var(--danger); color: #fff; padding: 2px 8px; }
+
+  /* Band assignment chips */
+  .band-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .band-chip { padding: 6px 14px; border: 2px solid var(--border); border-radius: 20px;
+               font-size: 0.82rem; font-weight: 600; cursor: pointer; user-select: none; transition: all 0.15s; }
+  .band-chip.feat { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+  .band-chip.unaff { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
+  .band-chip-legend { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+
+  /* File paths */
+  .file-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .file-row input { flex: 1; }
+  .file-row .file-label { min-width: 100px; font-weight: 600; font-size: 0.85rem; }
+
+  /* Events list */
+  .event-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .event-row input[type="date"] { width: 160px; flex-shrink: 0; }
+  .event-row input[type="text"] { flex: 1; }
+
+  /* Changes table */
+  .changes-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
+  .changes-table th { background: var(--section-bg); padding: 8px 10px; text-align: left;
+                      font-weight: 600; border-bottom: 2px solid var(--border); }
+  .changes-table td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  .changes-table input[type="text"], .changes-table select, .changes-table textarea {
+    width: 100%; padding: 4px 8px; font-size: 0.85rem; }
+  .changes-table textarea { min-height: 36px; resize: vertical; }
+
+  /* Expectations */
+  .expect-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .expect-row input[type="text"] { flex: 1; }
+  .expect-row select { width: 140px; flex-shrink: 0; }
+
+  /* Actions */
+  .actions { background: var(--card); border: 2px solid var(--accent); border-radius: 10px;
+             padding: 20px; text-align: center; margin-top: 8px; }
+  .actions p { margin-bottom: 12px; font-size: 0.95rem; }
+  .btn-ready { background: var(--success); color: #fff; border: none; padding: 14px 40px;
+               font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer;
+               transition: background 0.15s; }
+  .btn-ready:hover { background: #157347; }
+  .btn-ready.active { animation: pulse 1.5s infinite; }
+  .btn-download { background: var(--accent); color: #fff; border: none; padding: 14px 40px;
+                  font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer;
+                  margin-left: 12px; transition: background 0.15s; }
+  .btn-download:hover { filter: brightness(1.1); }
+  .btn-download:disabled { background: #94a3b8; cursor: not-allowed; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(25,135,84,0.4); } 50% { box-shadow: 0 0 0 12px rgba(25,135,84,0); } }
+  .status { margin-top: 12px; font-weight: 600; font-size: 0.95rem; }
+  .status.waiting { color: var(--muted); }
+  .status.ready { color: var(--success); }
+
+  /* JSON preview */
+  .json-preview { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px;
+                  font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.78rem;
+                  max-height: 400px; overflow: auto; white-space: pre-wrap; margin-top: 12px; display: none; }
+  .btn-toggle-json { background: none; border: 1px solid var(--border); padding: 6px 14px;
+                     border-radius: 4px; cursor: pointer; font-size: 0.82rem; margin-top: 8px; }
+
+  /* Validation */
+  .invalid { border-color: var(--danger) !important; }
+  .valid-msg { color: var(--danger); font-size: 0.78rem; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>RAN Trial Intake Form</h1>
+  <p>Fill in all sections, then tell Claude to process. Claude will read the form and generate KPI charts, statistical analysis, and technical memo.</p>
+</div>
+
+<!-- ─── 1. Trial Metadata ─── -->
+<div class="section" id="sec-meta">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">1</span>
+    <span class="section-title">Trial Metadata</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="row">
+      <div class="field">
+        <label>Trial ID <span class="req">*</span></label>
+        <div class="hint">Short identifier for file names</div>
+        <input type="text" id="trial_id" placeholder="e.g. CBXXXXXX" required>
+      </div>
+      <div class="field">
+        <label>Feature / Trial Name <span class="req">*</span></label>
+        <div class="hint">Primary feature or trial description</div>
+        <input type="text" id="feature_name" placeholder="e.g. Micro DTX without Traffic Concentration">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Vendor</label>
+        <select id="vendor">
+          <option value="Nokia">Nokia</option>
+          <option value="Ericsson">Ericsson</option>
+          <option value="Huawei">Huawei</option>
+          <option value="Samsung">Samsung</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Network</label>
+        <input type="text" id="network" placeholder="e.g. MNO 4G" value="">
+      </div>
+      <div class="field">
+        <label>Technology</label>
+        <select id="technology">
+          <option value="4G LTE">4G LTE</option>
+          <option value="5G NR">5G NR</option>
+          <option value="4G+5G">4G + 5G</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:10px;">
+      <label>Changes Applied in Trial <span class="req">*</span></label>
+      <div class="hint">List all parameter changes, feature activations, new MO introductions, etc. applied during the trial.</div>
+      <table class="changes-table" id="changes-table">
+        <thead>
+          <tr>
+            <th style="width:140px">Type</th>
+            <th>Name / Parameter</th>
+            <th style="width:110px">MO Level</th>
+            <th style="width:100px">Before</th>
+            <th style="width:100px">After</th>
+            <th>Notes</th>
+            <th style="width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="changes-tbody"></tbody>
+      </table>
+      <button class="btn-sm btn-add" onclick="addChange()">+ Add Change</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 2. Software Versions ─── -->
+<div class="section" id="sec-sw">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">2</span>
+    <span class="section-title">Software Versions Under Test</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="row">
+      <div class="field">
+        <label>RC1 Label <span class="req">*</span></label>
+        <input type="text" id="rc1_label" placeholder="e.g. RC3">
+      </div>
+      <div class="field">
+        <label>RC1 SW Version</label>
+        <input type="text" id="rc1_sw" placeholder="e.g. Nokia SW 24.2.1">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>RC2 Label</label>
+        <div class="hint">Leave blank for single-RC trials</div>
+        <input type="text" id="rc2_label" placeholder="e.g. RC4">
+      </div>
+      <div class="field">
+        <label>RC2 SW Version</label>
+        <input type="text" id="rc2_sw" placeholder="e.g. Nokia SW 24.3.0">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 3. Trial Periods ─── -->
+<div class="section" id="sec-periods">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">3</span>
+    <span class="section-title">Trial Periods</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="row">
+      <div class="field">
+        <label>Baseline Start <span class="req">*</span></label>
+        <input type="date" id="baseline_start">
+      </div>
+      <div class="field">
+        <label>Baseline End <span class="req">*</span></label>
+        <input type="date" id="baseline_end">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Trial Start <span class="req">*</span></label>
+        <input type="date" id="trial_start">
+      </div>
+      <div class="field">
+        <label>Trial End <span class="req">*</span></label>
+        <input type="date" id="trial_end">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Post-Rollback Start</label>
+        <div class="hint">Leave blank if no rollback period</div>
+        <input type="date" id="post_rb_start">
+      </div>
+      <div class="field">
+        <label>Post-Rollback End</label>
+        <input type="date" id="post_rb_end">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 4. Carrier Allocation ─── -->
+<div class="section" id="sec-carriers">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">4</span>
+    <span class="section-title">Carrier Allocation &amp; Band Assignment</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="hint" style="margin-bottom:10px;">
+      Define all carriers in the cluster. Mark each as MNO (included) or excluded.
+      Then click a MNO carrier's band chip below to toggle it between <strong>Feature</strong> (yellow) and <strong>Unaffected</strong> (blue).
+    </div>
+    <table class="carrier-table" id="carrier-table">
+      <thead>
+        <tr>
+          <th style="width:50px">MNO</th>
+          <th style="width:110px">EARFCN</th>
+          <th style="width:110px">Band Label</th>
+          <th style="width:80px">BW (MHz)</th>
+          <th style="width:100px">Operator</th>
+          <th style="width:120px">Band Group</th>
+          <th style="width:50px"></th>
+        </tr>
+      </thead>
+      <tbody id="carrier-tbody"></tbody>
+    </table>
+    <button class="btn-sm btn-add" onclick="addCarrierRow()">+ Add Carrier</button>
+
+    <div style="margin-top: 16px;">
+      <label style="font-weight:600; font-size:0.85rem;">Band Assignment Summary</label>
+      <div class="band-chips" id="band-chips"></div>
+      <div class="band-chip-legend">Click to toggle: <span style="color:#92400e;font-weight:600;">Yellow = Feature band</span> &nbsp;|&nbsp; <span style="color:#1e40af;font-weight:600;">Blue = Unaffected band</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 5. Data Files ─── -->
+<div class="section" id="sec-files">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">5</span>
+    <span class="section-title">Data Files</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="hint" style="margin-bottom:12px;">
+      Provide file paths relative to the workspace folder, or absolute paths.
+    </div>
+    <div class="file-row">
+      <span class="file-label">RC1 KPI Export <span class="req">*</span></span>
+      <input type="text" id="rc1_file" placeholder="e.g. 4G_System_Program_Nokia_RC3.xlsx">
+    </div>
+    <div class="file-row">
+      <span class="file-label">RC2 KPI Export</span>
+      <input type="text" id="rc2_file" placeholder="e.g. 4G_System_Program_Nokia_RC4.xlsx">
+    </div>
+    <div class="file-row">
+      <span class="file-label">RC1 Energy</span>
+      <input type="text" id="rc1_energy" placeholder="e.g. RC3_energy.xlsx (optional)">
+    </div>
+    <div class="file-row">
+      <span class="file-label">RC2 Energy</span>
+      <input type="text" id="rc2_energy" placeholder="e.g. RC4_energy.xlsx (optional)">
+    </div>
+    <div class="file-row">
+      <span class="file-label">Feature Doc</span>
+      <input type="text" id="feature_doc" placeholder="e.g. Micro_DTX_for_LTE.pdf (optional)">
+    </div>
+  </div>
+</div>
+
+<!-- ─── 6. Feature Context & Expectations ─── -->
+<div class="section" id="sec-expect">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">6</span>
+    <span class="section-title">Feature Context &amp; Expectations</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <label>Feature Description</label>
+      <div class="hint">Brief summary of what the feature does (1-3 sentences)</div>
+      <textarea id="feature_desc" placeholder="e.g. Micro DTX allows BTS power amplifier muting during empty OFDM symbols to reduce energy consumption without Traffic Concentration scheduling."></textarea>
+    </div>
+    <div class="field">
+      <label>Expected KPI Impacts</label>
+      <div class="hint">Add expected impacts per KPI category. Direction: Improve / Degrade / Neutral</div>
+      <div id="expect-list"></div>
+      <button class="btn-sm btn-add" onclick="addExpectation()">+ Add Expectation</button>
+    </div>
+    <div class="field">
+      <label>KPIs to Flag as Invalid</label>
+      <div class="hint">KPIs from the standard set that are NOT applicable to this feature (comma-separated)</div>
+      <input type="text" id="invalid_kpis" placeholder="e.g. PSM Ratio, ReducedTX Ratio">
+    </div>
+    <div class="field">
+      <label>Nokia Counter Notes</label>
+      <div class="hint">Any known counter behavior to document (e.g. M8010C93 reads zero when feature active)</div>
+      <textarea id="counter_notes" placeholder="Optional"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 7. Confounding Events ─── -->
+<div class="section" id="sec-events">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">7</span>
+    <span class="section-title">Confounding Events</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="hint" style="margin-bottom:10px;">
+      Known events during the trial window that may explain KPI changes.
+    </div>
+    <div id="events-list"></div>
+    <button class="btn-sm btn-add" onclick="addEvent()">+ Add Event</button>
+  </div>
+</div>
+
+<!-- ─── 8. Output Preferences ─── -->
+<div class="section" id="sec-output">
+  <div class="section-head" onclick="toggleSection(this)">
+    <span class="section-num">8</span>
+    <span class="section-title">Output Preferences</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="row">
+      <div class="field">
+        <label>Include Post-Rollback</label>
+        <select id="include_post_rb">
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Preliminary Verdict</label>
+        <select id="prelim_verdict">
+          <option value="">Not set — let Claude decide</option>
+          <option value="PASS">PASS</option>
+          <option value="PASS WITH CONDITIONS">PASS WITH CONDITIONS</option>
+          <option value="FAIL">FAIL</option>
+          <option value="INCONCLUSIVE">INCONCLUSIVE</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Verdict Reasoning</label>
+      <div class="hint">Optional: pre-fill your reasoning if you already have a verdict</div>
+      <textarea id="verdict_reasoning" placeholder="Optional"></textarea>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Generate KPI Charts Excel</label>
+        <select id="out_kpi"><option value="yes">Yes</option><option value="no">No</option></select>
+      </div>
+      <div class="field">
+        <label>Generate Stats Excel</label>
+        <select id="out_stats"><option value="yes">Yes</option><option value="no">No</option></select>
+      </div>
+      <div class="field">
+        <label>Generate Technical Memo</label>
+        <select id="out_memo"><option value="yes">Yes</option><option value="no">No</option></select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Actions ─── -->
+<div class="actions" id="actions-panel">
+  <p>When all fields are filled, click the button below and tell Claude <strong>"process the trial"</strong>.</p>
+  <button class="btn-ready" id="btn-ready" onclick="markReady()">Mark Ready for Processing</button>
+  <button class="btn-download" id="btn-download" onclick="downloadJson()">Download JSON</button>
+  <div class="status waiting" id="status-msg">Fill in required fields first</div>
+  <button class="btn-toggle-json" onclick="toggleJson()">Show/Hide JSON Preview</button>
+  <pre class="json-preview" id="json-preview"></pre>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ─── Default MNO carriers (example — replace with your cluster) ───
+const DEFAULT_CARRIERS = [
+  { mno_incl: true,  earfcn: 9260,  label: 'B700',     bw: 10, op: 'MNO', group: 'unaff' },
+  { mno_incl: true,  earfcn: 6400,  label: 'B800',     bw: 10, op: 'MNO', group: 'feat' },
+  { mno_incl: true,  earfcn: 3725,  label: 'B900',     bw: 10, op: 'MNO', group: 'feat' },
+  { mno_incl: true,  earfcn: 1226,  label: 'B1800',    bw: 5,  op: 'MNO', group: 'feat' },
+  { mno_incl: true,  earfcn: 347,   label: 'B2100',    bw: 10, op: 'MNO', group: 'feat' },
+  { mno_incl: true,  earfcn: 39250, label: 'B2300_F1', bw: 20, op: 'MNO', group: 'unaff' },
+  { mno_incl: true,  earfcn: 39448, label: 'B2300_F2', bw: 20, op: 'MNO', group: 'unaff' },
+  { mno_incl: false, earfcn: 6300,  label: 'B800',     bw: 10, op: 'OtherMNO',  group: '' },
+  { mno_incl: false, earfcn: 3507,  label: 'B900',     bw: 10, op: 'OtherMNO',  group: '' },
+  { mno_incl: false, earfcn: 223,   label: 'B2100',    bw: 10, op: 'OtherMNO',  group: '' },
+  { mno_incl: false, earfcn: 247,   label: 'B2100',    bw: 10, op: 'OtherMNO',  group: '' },
+];
+
+let carriers = JSON.parse(JSON.stringify(DEFAULT_CARRIERS));
+let formReady = false;
+
+// ─── Trial changes (multi-param support) ───
+let changes = [
+  { type: 'Parameter change', name: '', mo_level: '', before: '', after: '', notes: '' }
+];
+
+function addChange() {
+  changes.push({ type: 'Parameter change', name: '', mo_level: '', before: '', after: '', notes: '' });
+  renderChanges();
+}
+
+function renderChanges() {
+  const tbody = document.getElementById('changes-tbody');
+  tbody.innerHTML = '';
+  changes.forEach((ch, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <select onchange="changes[${i}].type=this.value; renderChanges();">
+          <option ${ch.type==='Parameter change'?'selected':''}>Parameter change</option>
+          <option ${ch.type==='Feature activation'?'selected':''}>Feature activation</option>
+          <option ${ch.type==='Feature deactivation'?'selected':''}>Feature deactivation</option>
+          <option ${ch.type==='New MO creation'?'selected':''}>New MO creation</option>
+          <option ${ch.type==='MO deletion'?'selected':''}>MO deletion</option>
+          <option ${ch.type==='SW parameter'?'selected':''}>SW parameter</option>
+          <option ${ch.type==='License activation'?'selected':''}>License activation</option>
+          <option ${ch.type==='Other'?'selected':''}>Other</option>
+        </select>
+      </td>
+      <td><input type="text" value="${ch.name}" placeholder="e.g. allowTrafficConcentration"
+                 onchange="changes[${i}].name=this.value;"></td>
+      <td><input type="text" value="${ch.mo_level}" placeholder="e.g. LNCEL"
+                 onchange="changes[${i}].mo_level=this.value;"></td>
+      <td><input type="text" value="${ch.before}" placeholder="${ch.type.includes('activation') || ch.type==='New MO creation' ? 'N/A' : 'e.g. 1'}"
+                 onchange="changes[${i}].before=this.value;"
+                 ${ch.type==='Feature activation' || ch.type==='New MO creation' || ch.type==='License activation' ? 'disabled style="background:#f3f4f6;color:#999;"' : ''}></td>
+      <td><input type="text" value="${ch.after}" placeholder="${ch.type.includes('deactivation') || ch.type==='MO deletion' ? 'N/A' : 'e.g. 0'}"
+                 onchange="changes[${i}].after=this.value;"
+                 ${ch.type==='Feature deactivation' || ch.type==='MO deletion' ? 'disabled style="background:#f3f4f6;color:#999;"' : ''}></td>
+      <td><input type="text" value="${ch.notes}" placeholder="Optional context"
+                 onchange="changes[${i}].notes=this.value;"></td>
+      <td><button class="btn-sm btn-del" onclick="changes.splice(${i},1); if(!changes.length) addChange(); else renderChanges();">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── Carrier table ───
+function renderCarriers() {
+  const tbody = document.getElementById('carrier-tbody');
+  tbody.innerHTML = '';
+  carriers.forEach((c, i) => {
+    const tr = document.createElement('tr');
+    tr.style.background = c.mno_incl ? '#f0fdf4' : '#fef2f2';
+    tr.innerHTML = `
+      <td><input type="checkbox" class="cb" ${c.mno_incl ? 'checked' : ''} onchange="carriers[${i}].mno_incl=this.checked; updateBandChips();"></td>
+      <td><input type="number" value="${c.earfcn}" onchange="carriers[${i}].earfcn=+this.value; updateBandChips();"></td>
+      <td><input type="text" value="${c.label}" onchange="carriers[${i}].label=this.value; updateBandChips();"></td>
+      <td><input type="number" value="${c.bw}" onchange="carriers[${i}].bw=+this.value;"></td>
+      <td><input type="text" value="${c.op}" onchange="carriers[${i}].op=this.value;"></td>
+      <td style="font-size:0.82rem;color:${c.mno_incl ? (c.group==='feat' ? '#92400e' : '#1e40af') : '#999'}">
+        ${c.mno_incl ? (c.group === 'feat' ? 'Feature' : 'Unaffected') : '— excluded —'}</td>
+      <td><button class="btn-sm btn-del" onclick="carriers.splice(${i},1); renderCarriers();">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateBandChips();
+}
+
+function addCarrierRow() {
+  carriers.push({ mno_incl: false, earfcn: 0, label: '', bw: 10, op: '', group: '' });
+  renderCarriers();
+}
+
+function updateBandChips() {
+  const chipDiv = document.getElementById('band-chips');
+  chipDiv.innerHTML = '';
+  carriers.filter(c => c.mno_incl).forEach((c, idx) => {
+    const realIdx = carriers.indexOf(c);
+    const chip = document.createElement('span');
+    chip.className = 'band-chip ' + (c.group === 'feat' ? 'feat' : 'unaff');
+    chip.textContent = c.label;
+    chip.onclick = () => {
+      carriers[realIdx].group = c.group === 'feat' ? 'unaff' : 'feat';
+      renderCarriers();
+    };
+    chipDiv.appendChild(chip);
+  });
+}
+
+// ─── Expectations ───
+let expectations = [];
+function addExpectation() {
+  expectations.push({ category: '', direction: 'Neutral', notes: '' });
+  renderExpectations();
+}
+function renderExpectations() {
+  const div = document.getElementById('expect-list');
+  div.innerHTML = '';
+  expectations.forEach((e, i) => {
+    const row = document.createElement('div');
+    row.className = 'expect-row';
+    row.innerHTML = `
+      <input type="text" placeholder="KPI category (e.g. Latency, Energy)" value="${e.category}"
+             onchange="expectations[${i}].category=this.value;">
+      <select onchange="expectations[${i}].direction=this.value;">
+        <option ${e.direction==='Improve'?'selected':''}>Improve</option>
+        <option ${e.direction==='Degrade'?'selected':''}>Degrade</option>
+        <option ${e.direction==='Neutral'?'selected':''}>Neutral</option>
+      </select>
+      <input type="text" placeholder="Notes" value="${e.notes}" onchange="expectations[${i}].notes=this.value;">
+      <button class="btn-sm btn-del" onclick="expectations.splice(${i},1); renderExpectations();">✕</button>
+    `;
+    div.appendChild(row);
+  });
+}
+
+// ─── Confounding Events ───
+let events = [];
+function addEvent() {
+  events.push({ date: '', desc: '', affects: '' });
+  renderEvents();
+}
+function renderEvents() {
+  const div = document.getElementById('events-list');
+  div.innerHTML = '';
+  events.forEach((e, i) => {
+    const row = document.createElement('div');
+    row.className = 'event-row';
+    row.innerHTML = `
+      <input type="date" value="${e.date}" onchange="events[${i}].date=this.value;">
+      <input type="text" placeholder="Description" value="${e.desc}" onchange="events[${i}].desc=this.value;">
+      <input type="text" placeholder="Affects (e.g. RC4 B2300)" value="${e.affects}" style="width:180px;"
+             onchange="events[${i}].affects=this.value;">
+      <button class="btn-sm btn-del" onclick="events.splice(${i},1); renderEvents();">✕</button>
+    `;
+    div.appendChild(row);
+  });
+}
+
+// ─── Section toggle ───
+function toggleSection(head) {
+  head.parentElement.classList.toggle('collapsed');
+}
+
+// ─── Collect all form data ───
+function collectFormData() {
+  const tefCarriers = carriers.filter(c => c.mno_incl);
+  const featBands = tefCarriers.filter(c => c.group === 'feat').map(c => c.label);
+  const unaffBands = tefCarriers.filter(c => c.group === 'unaff').map(c => c.label);
+  const earfcnMap = {};
+  tefCarriers.forEach(c => { earfcnMap[c.earfcn] = c.label; });
+
+  return {
+    _form_version: '1.1',
+    _ready: formReady,
+    trial_metadata: {
+      trial_id:       document.getElementById('trial_id').value.trim(),
+      feature_name:   document.getElementById('feature_name').value.trim(),
+      vendor:         document.getElementById('vendor').value,
+      network:        document.getElementById('network').value.trim(),
+      technology:     document.getElementById('technology').value,
+      changes:        changes.filter(c => c.name).map(c => ({
+        type:     c.type,
+        name:     c.name,
+        mo_level: c.mo_level || null,
+        before:   c.before || null,
+        after:    c.after || null,
+        notes:    c.notes || null,
+      })),
+    },
+    software_versions: {
+      rc1_label: document.getElementById('rc1_label').value.trim(),
+      rc1_sw:    document.getElementById('rc1_sw').value.trim(),
+      rc2_label: document.getElementById('rc2_label').value.trim(),
+      rc2_sw:    document.getElementById('rc2_sw').value.trim(),
+    },
+    trial_periods: {
+      baseline_start: document.getElementById('baseline_start').value,
+      baseline_end:   document.getElementById('baseline_end').value,
+      trial_start:    document.getElementById('trial_start').value,
+      trial_end:      document.getElementById('trial_end').value,
+      post_rb_start:  document.getElementById('post_rb_start').value,
+      post_rb_end:    document.getElementById('post_rb_end').value,
+    },
+    carrier_allocation: {
+      all_carriers: carriers,
+      tef_earfcn_map: earfcnMap,
+      feature_bands:    featBands,
+      unaffected_bands: unaffBands,
+      excluded_carriers: carriers.filter(c => !c.mno_incl).map(c => ({
+        earfcn: c.earfcn, label: c.label, operator: c.op
+      })),
+    },
+    data_files: {
+      rc1_kpi:    document.getElementById('rc1_file').value.trim(),
+      rc2_kpi:    document.getElementById('rc2_file').value.trim(),
+      rc1_energy: document.getElementById('rc1_energy').value.trim(),
+      rc2_energy: document.getElementById('rc2_energy').value.trim(),
+      feature_doc: document.getElementById('feature_doc').value.trim(),
+    },
+    feature_context: {
+      description:   document.getElementById('feature_desc').value.trim(),
+      expectations:  expectations.filter(e => e.category),
+      invalid_kpis:  document.getElementById('invalid_kpis').value.split(',').map(s=>s.trim()).filter(Boolean),
+      counter_notes: document.getElementById('counter_notes').value.trim(),
+    },
+    confounding_events: events.filter(e => e.date || e.desc),
+    output_preferences: {
+      include_post_rb:  document.getElementById('include_post_rb').value === 'yes',
+      prelim_verdict:   document.getElementById('prelim_verdict').value || null,
+      verdict_reasoning: document.getElementById('verdict_reasoning').value.trim() || null,
+      generate_kpi_charts:  document.getElementById('out_kpi').value === 'yes',
+      generate_stats_excel: document.getElementById('out_stats').value === 'yes',
+      generate_memo:        document.getElementById('out_memo').value === 'yes',
+    },
+  };
+}
+
+// ─── Expose for Claude Code to read from a saved file ───
+// Workflow: user clicks "Download JSON" → file saved to workspace → Claude reads via bash.
+// Filename defaults to trial_intake.json in the browser's download location.
+window.__TRIAL_INTAKE__ = null;
+
+function markReady() {
+  formReady = true;
+  const data = collectFormData();
+  window.__TRIAL_INTAKE__ = data;
+  document.getElementById('status-msg').className = 'status ready';
+  document.getElementById('status-msg').textContent = '✓ Ready — tell Claude "process the trial" or "run it"';
+  document.getElementById('btn-ready').classList.add('active');
+  document.getElementById('json-preview').textContent = JSON.stringify(data, null, 2);
+}
+
+function downloadJson() {
+  const data = collectFormData();
+  window.__TRIAL_INTAKE__ = data;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trial_intake.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const status = document.getElementById('status-msg');
+  status.className = 'status ready';
+  status.textContent = '✓ trial_intake.json downloaded — save it to the trial workspace, then tell Claude to process it';
+}
+
+function toggleJson() {
+  const pre = document.getElementById('json-preview');
+  if (pre.style.display === 'none' || !pre.style.display) {
+    // refresh
+    const data = collectFormData();
+    pre.textContent = JSON.stringify(data, null, 2);
+    pre.style.display = 'block';
+  } else {
+    pre.style.display = 'none';
+  }
+}
+
+// ─── Init ───
+renderChanges();
+renderCarriers();
+addExpectation();
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "_comment": "LTE feature_context.json template — fill in for each trial.",
+  "_instructions": [
+    "1. Replace trial_id, rc3_label, rc4_label, feature_name, feature_doc, mechanism_summary.",
+    "2. For t1_kpis, the 'col' value MUST match the KPI name field in RC3_FEAT/RC4_FEAT arrays.",
+    "   Example: if RC3_FEAT has ('ERAB Retain. Fail', ...), use col = 'ERAB Retain. Fail'.",
+    "3. Set higher_bad: true if larger value = degradation (fail ratio, delay, BLER).",
+    "              false if smaller value = degradation (throughput, SR, sleep ratio).",
+    "4. category: mechanism | outcome | quality | watchdog | context.",
+    "5. No t1_es_kpis for LTE — energy KPIs come from the same extract, not a separate ES file.",
+    "6. Save as feature_context.json in the same directory as build_stats_report_template.py."
+  ],
+  "trial_id": "CBXXXXXX",
+  "rc3_label": "RC3",
+  "rc4_label": "RC4",
+  "feature_name": "Feature name from Nokia DN",
+  "feature_doc": "DNXXXXXXXXX",
+  "mechanism_summary": "One-sentence description of what the feature changes at the radio/scheduling level.",
+  "t1_kpis": [
+    {
+      "col": "KPI name as in RC3_FEAT (primary mechanism indicator)",
+      "unit": "(%)",
+      "higher_bad": false,
+      "category": "mechanism"
+    },
+    {
+      "col": "KPI name as in RC3_FEAT (expected outcome KPI)",
+      "unit": "(ms)",
+      "higher_bad": true,
+      "category": "outcome"
+    },
+    {
+      "col": "KPI name as in RC3_FEAT (watchdog KPI)",
+      "unit": "(%)",
+      "higher_bad": true,
+      "category": "watchdog"
+    },
+    {
+      "col": "KPI name as in RC3_FEAT (traffic context)",
+      "unit": "(%)",
+      "higher_bad": true,
+      "category": "context"
+    }
+  ]
+}

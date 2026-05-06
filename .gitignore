@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+venv/
+.venv/
+
+# Node
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Generated outputs (trial-specific — do not commit)
+*.xlsx
+*.docx
+*.csv
+*_KPI_Grouped.xlsx
+*_Statistical_Analysis.xlsx
+*_Trial_Analysis.docx
+*_nr_stats_*.csv
+*_nr_es_stats.csv
+feature_context.json        # trial-specific; commit feature_context_template.json instead
+
+# Exception: anonymized example outputs in examples/ are committed as reference
+!examples/**/*.xlsx
+!examples/**/*.docx
+
+# Trial intake files (may contain sensitive data)
+trial_intake.json
+trial_intake_filled*.md
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
